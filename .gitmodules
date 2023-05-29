@@ -1,0 +1,4 @@
+[submodule "go-expanse"]
+	path = go-expanse
+	url = https://www.github.com/expanse-org/go-expanse
+	branchg = frkhash
