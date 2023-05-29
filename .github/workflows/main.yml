@@ -1,0 +1,109 @@
+name: Discv4 Test
+on:
+  schedule:
+    - cron: '0 0 * * *'
+      
+    # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.repository == 'expanse-org/discv4-dns-lists'
+    name: Discv4-DNS-Crawler
+    runs-on: ubuntu-20.04
+    env:
+      ETH_DNS_DISCV4_CRAWLTIME: 30s
+      ETH_DNS_DISCV4_PARENT_DOMAIN: exp.blue
+      ETH_DNS_DISCV4_KEY_PATH: ./secrets/dnskey.json
+      ETH_DNS_DISCV4_KEYPASS_PATH: ./secrets/dnskey_password.txt
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      ETH_DNS_CLOUDFLARE_ZONEID: ${{ secrets.ETH_DNS_CLOUDFLARE_ZONEID }}
+      ETH_DNS_DISCV4_KEY: ${{ secrets.ETH_DNS_DISCV4_KEY }}
+      ETH_DNS_DISCV4_KEYPASS: ${{ secrets.ETH_DNS_DISCV4_KEYPASS }}
+
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.20.3
+      id: go
+
+    - run: go version
+
+    - run: sudo apt-get install -y jq
+
+    - name: Check out code
+      uses: actions/checkout@v2
+      with:
+        ref: etccore
+        token: ${{ secrets.PAT_CHRISFRANKO_REPO }}
+
+    - uses: actions/checkout@v2
+      with:
+        ref: etccore
+        token: ${{ secrets.PAT_CHRISFRANKO_REPO }}
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        # If your submodules are configured to use SSH instead of HTTPS please uncomment the following line
+        # git config --global url."https://github.com/".insteadOf "git@github.com:"
+        git submodule init
+        git submodule update --remote
+        cd go-expanse
+        make devp2p
+        make ethkey
+        echo "$(pwd)/build/bin" >> $GITHUB_PATH
+        cd ..
+        git diff --quiet || { git add go-expanse && git -c user.name='chrisfranko' -c user.email='christopher@expanse.tech' commit --author='crawler <>' -m "ci update (go-expanse:${checkout_ref}) $GITHUB_RUN_ID:$GITHUB_RUN_NUMBER"; }
+
+    - name: Setup secrets
+      run: |
+        mkdir secrets
+        echo "$ETH_DNS_DISCV4_KEY" > "$ETH_DNS_DISCV4_KEY_PATH"
+        echo "$ETH_DNS_DISCV4_KEYPASS" > "$ETH_DNS_DISCV4_KEYPASS_PATH"
+
+    - name: Check env and secrets
+      run: |
+        ./.ci/deps.sh
+        export ETH_DNS_DISCV4_KEY_PUBLICINFO="$(cat $ETH_DNS_DISCV4_KEYPASS_PATH | ethkey inspect $ETH_DNS_DISCV4_KEY_PATH | grep -E '(Addr|Pub)')"
+        echo "$ETH_DNS_DISCV4_KEY_PUBLICINFO"
+
+    - name: Condense Expanse (EXP) nodes list
+      run: |
+        cat \
+          all.expanse.exp.blue/nodes.json \
+          all.rebirth.exp.blue/nodes.json \
+          | jq -s add \
+          > all.json
+
+    - name: Crawl
+      run: |
+        ./.ci/crawl.sh
+
+    - name: Filter and sign
+      run: |
+        ./.ci/filter_and_sign.sh expanse rebirth
+
+    - name: Deploy to DNS
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      run: |
+        ./.ci/deploy2.sh expanse
+
+    - name: Push
+      env:
+        GITHUB_PAT: ${{ secrets.PAT_CHRISFRANKO_REPO }}
+      run: |
+        git config --local user.name 'chrisfranko'
+        git config --local user.email 'christopher@expanse.tech'
+        git remote set-url origin https://chrisfranko:${GITHUB_PAT}@github.com/${GITHUB_REPOSITORY}.git
+        git push origin etccore
+    
+    - uses: actions/checkout@v2
+    - name: HandleIfFailure
+      if: failure()
+      uses: JasonEtco/create-an-issue@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        filename: .github/issue-on-failure.md
