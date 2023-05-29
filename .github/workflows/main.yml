@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    if: github.repository == 'expanse-org/discv4-dns-lists'
+    if: github.repository == 'expanse-org/discovery-dns'
     name: Discv4-DNS-Crawler
     runs-on: ubuntu-20.04
     env:
@@ -35,12 +35,12 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
       with:
-        ref: etccore
+        ref: main
         token: ${{ secrets.PAT_CHRISFRANKO_REPO }}
 
     - uses: actions/checkout@v2
       with:
-        ref: etccore
+        ref: main
         token: ${{ secrets.PAT_CHRISFRANKO_REPO }}
     - name: Checkout submodules
       shell: bash
@@ -97,7 +97,7 @@ jobs:
         git config --local user.name 'chrisfranko'
         git config --local user.email 'christopher@expanse.tech'
         git remote set-url origin https://chrisfranko:${GITHUB_PAT}@github.com/${GITHUB_REPOSITORY}.git
-        git push origin etccore
+        git push origin main
     
     - uses: actions/checkout@v2
     - name: HandleIfFailure
