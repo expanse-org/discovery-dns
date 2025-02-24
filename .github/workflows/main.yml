@@ -12,7 +12,7 @@ jobs:
     name: Discv4-DNS-Crawler
     runs-on: ubuntu-20.04
     env:
-      ETH_DNS_DISCV4_CRAWLTIME: 30s
+      ETH_DNS_DISCV4_CRAWLTIME: 60m0s
       ETH_DNS_DISCV4_PARENT_DOMAIN: exp.blue
       ETH_DNS_DISCV4_KEY_PATH: ./secrets/dnskey.json
       ETH_DNS_DISCV4_KEYPASS_PATH: ./secrets/dnskey_password.txt
