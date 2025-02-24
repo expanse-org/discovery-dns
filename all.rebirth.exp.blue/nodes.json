@@ -1,1 +1,10 @@
-{}
+{
+    "ac560a28d4e48abf6a66cb6bd9455f84cae5500f22c5b7cadd989e3ae4849e1f": {
+        "seq": 10,
+        "record": "enr:-J24QDaDxCkZ04LqJ2nLWsDmMaWRKXicPu6VguWr9ijuMGyBW4MYih-ua4j6AJojZSknRNhVh-qt4j41SQx9Ys-6sssKg2V4cMfGhEgOssxkgmlkgnY0gmlwhMBR0cmDbGVzwQGJc2VjcDI1NmsxoQI5KsSnaE5hgG64Qia59FSPWhf5pU0Rgb8VmYN_A9V2BIN0Y3CCpyKDdWRwgqci",
+        "score": 1,
+        "firstResponse": "2023-05-28T20:08:13Z",
+        "lastResponse": "2023-05-28T20:08:13Z",
+        "lastCheck": "2023-05-28T20:08:13Z"
+    }
+}
